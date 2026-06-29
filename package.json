@@ -1,0 +1,70 @@
+{
+  "name": "morela-bot",
+  "version": "2.0.0",
+  "description": "WhatsApp Bot Base with Button Support",
+  "main": "utama.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx utama.ts",
+    "build": "tsc",
+    "start": "tsx utama.ts",
+    "migrate": "tsx scripts/migrate-json-to-sqlite.ts"
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.3",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cheerio": "^0.22.35",
+    "@types/crypto-js": "^4.2.2",
+    "@types/figlet": "^1.5.8",
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/form-data": "^2.5.2",
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^20.14.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/node-fetch": "^2.6.12",
+    "@types/sharp": "^0.31.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.5.0"
+  },
+  "author": "Morela",
+  "license": "MIT",
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@itsliaaa/baileys": "^0.3.16",
+    "archiver": "^5.3.1",
+    "axios": "^1.13.6",
+    "baileys": "7.0.0-rc.9",
+    "better-sqlite3": "^11.10.0",
+    "canvas": "^2.11.2",
+    "chalk": "^4.1.2",
+    "cheerio": "^1.0.0-rc.12",
+    "crypto-js": "^4.2.0",
+    "figlet": "^1.7.0",
+    "file-type": "^19.0.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "gradient-string": "^3.0.0",
+    "human-readable": "^0.2.1",
+    "jimp": "^1.6.0",
+    "jszip": "^3.10.1",
+    "luxon": "^3.4.4",
+    "node-cache": "^5.1.2",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
+    "node-webpmux": "^3.1.1",
+    "pdfkit": "^0.18.0",
+    "pino": "^8.19.0",
+    "playwright": "^1.59.1",
+    "sharp": "^0.33.5",
+    "tesseract.js": "^7.0.0",
+    "unzipper": "^0.12.3",
+    "yt-search": "^2.10.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
