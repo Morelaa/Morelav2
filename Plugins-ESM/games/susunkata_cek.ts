@@ -1,0 +1,141 @@
+import path from 'path'
+import fs from 'fs'
+
+const SESSION_FILE = path.join(process.cwd(), 'data/susunkata.json')
+const TIMEOUT_MS   = 60_000
+
+function loadSessions() {
+  try {
+    if (!fs.existsSync(SESSION_FILE)) return {}
+    return JSON.parse(fs.readFileSync(SESSION_FILE, 'utf-8'))
+  } catch { return {} }
+}
+
+function saveSessions(data: unknown) {
+  try {
+    fs.mkdirSync(path.join(process.cwd(), 'data'), { recursive: true })
+    const _tmp = SESSION_FILE + '.tmp'
+    fs.writeFileSync(_tmp, JSON.stringify(data, null, 2), 'utf-8')
+    fs.renameSync(_tmp, SESSION_FILE)
+  } catch (e) {
+    console.error('[SUSUNKATA_CEK] Gagal simpan:', (e as Error).message)
+  }
+}
+
+export default {
+  tags: ['game'],
+  handler: async (m, { Morela, fkontak }) => {
+    if (!m.text) return
+    if (m.key?.fromMe) return
+
+    const sessions = loadSessions()
+
+    const session  = sessions[m.chat]
+    if (!session) return
+
+    const expired = Date.now() - session.timestamp > TIMEOUT_MS
+
+    if (expired && !session.timedOut) {
+      session.timedOut = true
+      sessions[m.chat] = session
+      saveSessions(sessions)
+
+      setTimeout(() => {
+        const s = loadSessions()
+        delete s[m.chat]
+        saveSessions(s)
+      }, 100)
+
+      await Morela.sendMessage(m.chat, {
+        text:
+`╭──「 ⏰ *Waktu Habis!* 」
+│
+│  Sayang sekali, waktu sudah habis~
+│
+│  🔤 *Soal*      » ${session.soal}
+│  🔑 *Jawaban*   » ${session.jawaban}
+│  📂 *Kategori*  » ${session.tipe}
+│
+│  Ketik *.susunkata* untuk soal baru!
+╰─────────────────────`
+      }, { quoted: fkontak || m })
+      return
+    }
+
+    if (expired) return
+
+    const raw     = m.text.trim()
+    const tebakan = raw.replace(/^[.!]/,'').trim().toUpperCase()
+
+    if (tebakan === 'NYERAH') {
+      delete sessions[m.chat]
+      saveSessions(sessions)
+
+      await Morela.sendMessage(m.chat, { react: { text: "🏳️", key: m.key } })
+      await Morela.sendMessage(m.chat, {
+        text:
+`╭──「 🏳️ *Menyerah!* 」
+│
+│  Tidak apa-apa, tetap semangat!
+│
+│  🔤 *Soal*      » ${session.soal}
+│  🔑 *Jawaban*   » ${session.jawaban}
+│  📂 *Kategori*  » ${session.tipe}
+│
+│  Ketik *.susunkata* untuk soal baru!
+╰─────────────────────
+_© Morela Bot_`
+      }, { quoted: fkontak || m })
+      return
+    }
+
+    if (raw.startsWith('.') || raw.startsWith('!')) return
+
+    const jawaban = session.jawaban.toUpperCase()
+
+    if (tebakan === jawaban) {
+      delete sessions[m.chat]
+      saveSessions(sessions)
+
+      await Morela.sendMessage(m.chat, { react: { text: "🎉", key: m.key } })
+      await Morela.sendMessage(m.chat, {
+        text:
+`╭──「 🎉 *Jawaban Benar!* 」
+│
+│  ✦ Selamat kamu berhasil!
+│
+│  🔑 *Jawaban*   » ${jawaban}
+│  📂 *Kategori*  » ${session.tipe}
+│
+│  Ketik *.susunkata* untuk soal baru!
+╰─────────────────────
+_© Morela Bot_`
+      }, { quoted: fkontak || m })
+      return
+    }
+
+    if (!session.lastWrong) session.lastWrong = {}
+    const lastWrong = session.lastWrong[m.sender] || 0
+    if (Date.now() - lastWrong < 5000) return
+
+    session.lastWrong[m.sender] = Date.now()
+    sessions[m.chat] = session
+    saveSessions(sessions)
+
+    const sisaDetik = Math.max(0, Math.ceil((TIMEOUT_MS - (Date.now() - session.timestamp)) / 1000))
+
+    await Morela.sendMessage(m.chat, { react: { text: "❌", key: m.key } })
+    await Morela.sendMessage(m.chat, {
+      text:
+`╭──「 ❌ *Jawaban Salah!* 」
+│
+│  *${tebakan}* bukan jawabannya~
+│
+│  🔤 *Soal*  » ${session.soal}
+│  ⏰ *Sisa*  » ${sisaDetik} detik
+│
+│  Coba lagi atau ketik *nyerah* 💪
+╰─────────────────────`
+    }, { quoted: fkontak || m })
+  }
+}
