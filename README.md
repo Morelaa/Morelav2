@@ -4,9 +4,9 @@
 
 <br/>
 
-![visitors](https://api.visitorbadge.io/api/VisitorHit?user=MorelaXz&repo=Morela-v2&countColor=%23A855F7)
-![stars](https://img.shields.io/github/stars/MorelaXz/Morela-v2?style=flat&color=A855F7&labelColor=0d1117)
-![forks](https://img.shields.io/github/forks/MorelaXz/Morela-v2?style=flat&color=A855F7&labelColor=0d1117)
+![visitors](https://api.visitorbadge.io/api/VisitorHit?user=Morelaa&repo=Morelav2&countColor=%23A855F7)
+![stars](https://img.shields.io/github/stars/Morelaa/Morelav2?style=flat&color=A855F7&labelColor=0d1117)
+![forks](https://img.shields.io/github/forks/Morelaa/Morelav2?style=flat&color=A855F7&labelColor=0d1117)
 ![Node](https://img.shields.io/badge/Node.js-≥18-339933?style=flat&logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat&logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-A855F7?style=flat)
@@ -22,8 +22,8 @@
 ## Instalasi
 
 ```bash
-git clone https://github.com/MorelaXz/Morela-v2.git
-cd Morela-v2
+git clone https://github.com/Morelaa/Morelav2.git
+cd Morelav2
 npm install
 npm start
 ```
@@ -72,44 +72,241 @@ Edit dan reload plugin tanpa restart bot, tanpa disconnect WA.
 .cekdb users   → inspeksi database langsung dari chat
 .backupdb      → backup data/ ke ZIP
 .clearcache    → bersihkan temp files
+.pushgit       → push bot ke GitHub (auto sensor data sensitif)
 ```
 
 ## Struktur File
 
 ```
-Morela-v2/
-├── utama.ts                  # entry point, koneksi WA
-├── Morela.ts                 # message router & handler utama
-├── config.ts                 # prefix, owner, thumbnail
+Morelav2/
+├── utama.ts                      # entry point, koneksi WA
+├── Morela.ts                     # message router & handler utama
+├── config.ts                     # prefix, owner, api keys, token
+├── tgbot.ts                      # Telegram bot integration
+│
+├── Core/
+│   ├── cache.ts                  # caching system
+│   ├── events.ts                 # event emitter
+│   ├── logutil.ts                # log utilities
+│   ├── permissions.ts            # permission checker
+│   ├── sewa.ts                   # sewa grup core
+│   ├── sockext.ts                # socket extension
+│   └── store.ts                  # in-memory store
+│
 ├── System/
-│   ├── message.ts            # preprocessing pesan
-│   ├── mainowner.ts          # identitas main owner
-│   ├── privatemode.ts        # toggle private mode
-│   └── selfmode.ts           # toggle self mode
+│   ├── logger.ts                 # logger
+│   ├── mainowner.ts              # identitas main owner
+│   ├── message.ts                # preprocessing pesan
+│   ├── privatemode.ts            # toggle private mode
+│   └── selfmode.ts               # toggle self mode
+│
 ├── Library/
-│   ├── MessageBuilder.ts     # AIRich, Button, Carousel builder
-│   ├── utils.ts              # utilities & constants
-│   └── antiabuse.ts          # rate limiter
+│   ├── MessageBuilder.ts         # AIRich, Button, Carousel builder
+│   ├── utils.ts                  # utilities & constants
+│   ├── antiabuse.ts              # rate limiter
+│   ├── handle.ts                 # message handler helper
+│   ├── resolve.ts                # media resolver
+│   ├── sticker.ts                # sticker helper
+│   ├── stickerPackHelper.ts      # sticker pack helper
+│   ├── meme.ts                   # meme generator
+│   ├── messagequeue.ts           # message queue
+│   ├── system.ts                 # system utilities
+│   ├── tg_global.ts              # telegram global helper
+│   ├── jadibotdb.ts              # jadibot database
+│   ├── canvas-quran.ts           # canvas quran renderer
+│   ├── canvas-rpg.ts             # canvas RPG renderer
+│   ├── canvas-soundcloud.ts      # canvas soundcloud card
+│   ├── canvas-spotify.ts         # canvas spotify card
+│   └── canvas-yts.ts             # canvas youtube search card
+│
 ├── Database/
-│   ├── db.ts                 # users, groups, lidmap
-│   ├── usagelimit.ts         # limit harian
-│   └── sewagrub.ts           # manajemen sewa grup
+│   ├── sqlite.ts                 # SQLite connection & schema
+│   ├── db.ts                     # users, groups, lidmap
+│   ├── usagelimit.ts             # limit harian
+│   ├── sewagrub.ts               # manajemen sewa grup
+│   ├── kvstore.ts                # key-value store
+│   ├── chatcount.ts              # chat counter
+│   └── stats.ts                  # statistik bot
+│
 ├── Plugins-ESM/
-│   ├── _pluginmanager.ts     # core plugin lifecycle
-│   ├── admin/                # manajemen grup
-│   ├── ai/                   # AI & image generation
-│   ├── downloader/           # YouTube, TikTok, IG, dll
-│   ├── games/                # games interaktif
-│   ├── info/                 # menu, jadwal, info
-│   ├── maker/                # fake chat, card, canvas
-│   ├── owner/                # devops & admin tools
-│   └── tools/                # utilities
+│   ├── _pluginmanager.ts         # core plugin lifecycle
+│   │
+│   ├── admin/                    # manajemen grup
+│   │   ├── anticatalog.ts / anticatalog-cmd.ts
+│   │   ├── antigrup.ts / antigrup-cmd.ts
+│   │   ├── antilink.ts / antilink-cmd.ts
+│   │   ├── antiswgc-cmd.ts / antiswgc-pasive.ts
+│   │   ├── antivirtex.ts / antivirtex-cmd.ts
+│   │   ├── ban.ts
+│   │   ├── goodbye.ts
+│   │   ├── hidetag.ts
+│   │   ├── htprem.ts
+│   │   ├── infogc.ts
+│   │   ├── mute.ts / mute-pasive.ts
+│   │   ├── openclose.ts / openclose-schedule.ts
+│   │   ├── promote.ts
+│   │   ├── reactionkick.ts
+│   │   ├── resetlink.ts
+│   │   ├── votekick.ts
+│   │   └── welcome.ts
+│   │
+│   ├── ai/                       # AI & image generation
+│   │   ├── aiagent.ts / aiagent-pasive.ts
+│   │   ├── aiedit.ts
+│   │   ├── autoai.ts / autoai-pasive.ts
+│   │   ├── autoai2.ts / autoai2-pasive.ts
+│   │   ├── deepai.ts
+│   │   ├── genmart.ts
+│   │   ├── image.ts
+│   │   ├── img.ts / img2img.ts
+│   │   ├── mathgpt.ts
+│   │   ├── to-ai.ts
+│   │   └── zai.ts
+│   │
+│   ├── downloader/               # downloader media
+│   │   ├── alldownload.ts
+│   │   ├── fb.ts
+│   │   ├── ig.ts
+│   │   ├── mediafire.ts
+│   │   ├── pin.ts / pinvid.ts
+│   │   ├── play.ts
+│   │   ├── ptv.ts
+│   │   ├── soundcloud.ts
+│   │   ├── spotify.ts
+│   │   ├── tiktok.ts / tiktok-pasive.ts / tiktokslide.ts / tt2.ts
+│   │   ├── webtoon.ts
+│   │   ├── ytmp3.ts / ytmp4.ts / yts.ts
+│   │   └── fb.ts
+│   │
+│   ├── games/                    # games interaktif
+│   │   ├── asahotak.ts / asahotak_cek.ts
+│   │   ├── buildml.ts
+│   │   ├── chess.ts
+│   │   ├── family100.ts / family100_cek.ts
+│   │   ├── guildwar.ts
+│   │   ├── kerangajaib.ts
+│   │   ├── mining.ts / listmining.ts
+│   │   ├── quote.ts
+│   │   ├── rpg-profil.ts
+│   │   ├── susunkata.ts / susunkata_cek.ts
+│   │   ├── tebakbendera.ts / tebakbendera_cek.ts
+│   │   ├── tebakgambar.ts / tebakgambar_cek.ts
+│   │   ├── tebakkata.ts / tebakkata_cek.ts
+│   │   ├── tebakkimia.ts / tebakkimia_cek.ts
+│   │   ├── tebaksurah.ts / tebaksurah_cek.ts
+│   │   └── truthordare.ts
+│   │
+│   ├── info/                     # informasi
+│   │   ├── artinama.ts
+│   │   ├── jadwalbola.ts
+│   │   ├── listsewa.ts
+│   │   ├── menu.ts
+│   │   ├── mpl.ts
+│   │   ├── quran.ts
+│   │   ├── tm.ts
+│   │   └── totalfitur.ts
+│   │
+│   ├── maker/                    # maker & card generator
+│   │   ├── carbon.ts
+│   │   ├── discord.ts
+│   │   ├── ephoto.ts
+│   │   ├── fakedev.ts
+│   │   ├── fakeff.ts / fakeffduo.ts
+│   │   ├── fakeml.ts
+│   │   ├── fakestory.ts
+│   │   ├── faketweet.ts
+│   │   ├── flaming.ts
+│   │   ├── iqc.ts
+│   │   ├── musikcard.ts
+│   │   └── toimg.ts
+│   │
+│   ├── owner/                    # devops & admin tools
+│   │   ├── addpkg.ts
+│   │   ├── airich.ts
+│   │   ├── backup-panel.ts
+│   │   ├── backupdb.ts
+│   │   ├── casetools.ts
+│   │   ├── cekdb.ts
+│   │   ├── ceklimit.ts
+│   │   ├── clearcache.ts
+│   │   ├── crm.ts
+│   │   ├── deletesmg.ts
+│   │   ├── delplugin.ts / getplugin.ts / listplugin.ts / reloadplugin.ts / saveplugin.ts
+│   │   ├── disable.ts
+│   │   ├── get.ts
+│   │   ├── healthcheck.ts
+│   │   ├── jadibot.ts / listbot.ts
+│   │   ├── nsfw.ts
+│   │   ├── owner.ts / ownergreet-pasive.ts
+│   │   ├── pay.ts
+│   │   ├── plugin.ts
+│   │   ├── premium.ts
+│   │   ├── privatemode.ts / selfmode.ts
+│   │   ├── pushgit.ts            # push bot ke GitHub
+│   │   ├── remgrup.ts
+│   │   ├── resetdb.ts
+│   │   ├── sc.ts
+│   │   ├── setmenu.ts
+│   │   ├── setownertype.ts
+│   │   ├── setpp.ts / setppwa.ts
+│   │   ├── sewagrub.ts
+│   │   ├── stats.ts
+│   │   ├── stopbot.ts
+│   │   ├── swgc.ts
+│   │   ├── tgbotset.ts
+│   │   └── topchat.ts / topchat-cmd.ts
+│   │
+│   ├── sticker/                  # sticker & brat
+│   │   ├── attp.ts / ttp.ts
+│   │   ├── brat.ts / bratgura.ts / bratoriginal.ts / bratruromiya.ts
+│   │   ├── bratspongebob.ts / brattren.ts / bratvid.ts
+│   │   ├── emoji.ts / emojimix.ts
+│   │   ├── qc.ts
+│   │   ├── smeme.ts
+│   │   ├── stickergen.ts / stickerpack.ts
+│   │   ├── stiker.ts / stikerbrat.ts / stikerline.ts
+│   │   └── telestiker.ts
+│   │
+│   └── tools/                    # utilities
+│       ├── Ouo.ts
+│       ├── bratv2.ts
+│       ├── bypass.ts
+│       ├── didyoumen.ts
+│       ├── getpp.ts / getppgrub.ts
+│       ├── hd.ts / hdv1.ts / hdv2.ts / hdvid.ts
+│       ├── inspect.ts
+│       ├── jadwal.ts
+│       ├── mathgpt.ts
+│       ├── ocr.ts
+│       ├── ping.ts
+│       ├── q.ts / qwa.ts
+│       ├── rch.ts
+│       ├── register.ts / register-pasive.ts
+│       ├── removebg.ts / removewm.ts
+│       ├── report.ts
+│       ├── rvo.ts / rvo2.ts / rvoset.ts / rvoreset.ts
+│       ├── skiplink.ts
+│       ├── stikercmd.ts / stikertiger.ts
+│       ├── tempmail-enhanced.ts
+│       ├── to4k.ts
+│       ├── tomp3.ts / tovideo.ts / tovidio.ts
+│       ├── topchat-pasive.ts
+│       ├── tourl.ts
+│       ├── translate.ts
+│       ├── tri.ts
+│       ├── userinfo.ts
+│       └── whois.ts
+│
 └── data/
-    ├── mainowner.json
-    ├── Own.json
-    ├── users.json
-    ├── lidmap.json
-    └── disabled_plugins.json
+    ├── morela.db                 # SQLite database utama
+    ├── asahotak.json
+    ├── family100.json
+    ├── susunkata.json
+    ├── tebakbendera.json
+    ├── tebakgambar.json
+    ├── tebakkata.json
+    ├── tebakkimia.json
+    └── tebaksurah.json
 ```
 
 ## Cara Jalankan
@@ -157,25 +354,23 @@ global.mainOwner    = '628xxxxxxxxxx'
 global.prefa        = ['', '.', '!', ',']
 global.prefix       = '.'
 global.thumbnailUrl = 'https://...'
-```
+global.tokengh      = 'github_token_kamu'
 
-```json
-// data/mainowner.json
-["628xxxxxxxxxx"]
-
-// data/Own.json
-["628xxxxxxxxxx", "628yyyyyyyyy"]
+global.tgBot = {
+  token:   'telegram_bot_token',
+  ownerId: 'telegram_chat_id'
+}
 ```
 
 ## Stats
 
 <div align="center">
 
-[![stats](https://github-readme-stats.vercel.app/api?username=MorelaXz&show_icons=true&theme=tokyonight&title_color=A855F7&icon_color=A855F7&border_color=A855F7&bg_color=0d1117&hide_border=false)](https://github.com/MorelaXz)
+[![stats](https://github-readme-stats.vercel.app/api?username=Morelaa&show_icons=true&theme=tokyonight&title_color=A855F7&icon_color=A855F7&border_color=A855F7&bg_color=0d1117&hide_border=false)](https://github.com/Morelaa)
 
-[![langs](https://github-readme-stats.vercel.app/api/top-langs/?username=MorelaXz&layout=compact&theme=tokyonight&title_color=A855F7&border_color=A855F7&bg_color=0d1117)](https://github.com/MorelaXz)
+[![langs](https://github-readme-stats.vercel.app/api/top-langs/?username=Morelaa&layout=compact&theme=tokyonight&title_color=A855F7&border_color=A855F7&bg_color=0d1117)](https://github.com/Morelaa)
 
-[![streak](https://streak-stats.demolab.com?user=MorelaXz&theme=tokyonight&ring=A855F7&fire=A855F7&currStreakLabel=A855F7&border=A855F7)](https://github.com/MorelaXz)
+[![streak](https://streak-stats.demolab.com?user=Morelaa&theme=tokyonight&ring=A855F7&fire=A855F7&currStreakLabel=A855F7&border=A855F7)](https://github.com/Morelaa)
 
 </div>
 
@@ -184,7 +379,7 @@ global.thumbnailUrl = 'https://...'
 <div align="center">
 
 [![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/628999889149)
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MorelaXz)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Morelaa)
 
 </div>
 
@@ -193,3 +388,4 @@ global.thumbnailUrl = 'https://...'
 
 © 2025 Morela · MIT License · by putraa
 </div>
+
