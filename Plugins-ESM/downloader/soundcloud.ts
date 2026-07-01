@@ -276,25 +276,19 @@ _Ketuk tombol untuk download track_ 👇`
   await Morela.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 
   try {
-    await Morela.sendMessage(m.chat, {
-      image              : canvasBuf || (fs.existsSync(imagePath) ? fs.readFileSync(imagePath) : undefined),
-      caption,
-      footer             : '© ' + botName,
-      interactiveButtons : [
-        {
-          name            : 'single_select',
-          buttonParamsJson: JSON.stringify({
-            title   : 'Pilih Lagu untuk Download',
-            sections: [{
-              title          : 'Hasil: ' + (text.length > 22 ? text.slice(0, 20) + '..' : text),
-              highlight_label: 'Top Tracks',
-              rows
-            }]
-          })
-        }
-      ],
-      hasMediaAttachment: true
-    }, { quoted: m })
+    const { Button } = await import('../../Library/MessageBuilder.js')
+    const scBtn = new Button(Morela)
+    const scImg = canvasBuf || (fs.existsSync(imagePath) ? fs.readFileSync(imagePath) : null)
+    if (scImg) scBtn.setImage(scImg)
+    scBtn.setBody(caption)
+    scBtn.setFooter('© ' + botName)
+    scBtn.addSelection('Pilih Lagu untuk Download')
+    scBtn.makeSection(
+      'Hasil: ' + (text.length > 22 ? text.slice(0, 20) + '..' : text),
+      'Top Tracks'
+    )
+    rows.forEach((r: any) => scBtn.makeRow(r.header, r.title, r.description, r.id))
+    await scBtn.send(m.chat, { quoted: m })
   } catch {
 
     let fallback = `🎵 *Hasil Pencarian SoundCloud*\nQuery: *${text}*\n\n`
