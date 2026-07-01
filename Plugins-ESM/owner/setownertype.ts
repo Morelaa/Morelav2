@@ -39,33 +39,15 @@ const handler = async (m: any, { Morela, args, fkontak }: any) => {
     )
   }
 
-  const buttons = Object.entries(VARIANTS).map(([id, val]) => {
+  const { Button } = await import('../../Library/MessageBuilder.js')
+  const otBtn = new Button(Morela)
+  otBtn.setBody(`╭╬╬⬡「 🎨 *sᴇᴛ ᴏᴡɲᴇʀ ᴛʏᴘᴇ* 」\n┃\n┃ ◦ Type saat ini : *V${current}*\n┃ ◦ Nama          : _${VARIANTS[current].name}_\n┃\n┃ Pilih variant owner:\n╰╬╬⬡\n\n© ${botName}`)
+  otBtn.setFooter('© ' + botName)
+  Object.entries(VARIANTS).forEach(([id, val]) => {
     const mark = parseInt(id) === current ? ' ✓' : ''
-    return {
-      name: 'quick_reply',
-      buttonParamsJson: JSON.stringify({
-        display_text: `V${id}${mark} — ${val.name}`,
-        id: `.setownertype v${id}`,
-      }),
-    }
+    otBtn.addReply(`V${id}${mark} — ${val.name}`, `.setownertype v${id}`)
   })
-
-  await Morela.sendMessage(
-    m.chat,
-    {
-      text:
-        `╭╌╌⬡「 🎨 *sᴇᴛ ᴏᴡɴᴇʀ ᴛʏᴘᴇ* 」\n` +
-        `┃\n` +
-        `┃ ◦ Type saat ini : *V${current}*\n` +
-        `┃ ◦ Nama          : _${VARIANTS[current].name}_\n` +
-        `┃\n` +
-        `┃ Pilih variant owner:\n` +
-        `╰╌╌⬡\n\n© ${botName}`,
-      interactiveButtons: buttons,
-      hasMediaAttachment: false,
-    },
-    { quoted: fkontak || m }
-  )
+  await otBtn.send(m.chat, { quoted: fkontak || m })
 }
 
 handler.command  = ['setownertype', 'ownertype', 'ownervariant', 'ownerstyle']
