@@ -146,23 +146,15 @@ const handler = async (m: any, { Morela, text, usedPrefix, command, reply, fkont
       `_Pilih pack di bawah ini_ 👇\n` +
       `© ${botName}`
 
-    await Morela.sendMessage(m.chat, {
-      ...(menuBuf ? { image: menuBuf, caption: ' ' } : { text: ' ' }),
-      footer,
-      interactiveButtons: [
-        {
-          name: 'single_select',
-          buttonParamsJson: JSON.stringify({
-            title:    '🎴 Pilih Sticker Pack',
-            sections: [{
-              title: `Hasil: ${text.length > 22 ? text.slice(0, 20) + '..' : text}`,
-              rows
-            }]
-          })
-        }
-      ],
-      hasMediaAttachment: !!menuBuf
-    }, { quoted: fkontak || m })
+    const { Button } = await import('../../Library/MessageBuilder.js')
+    const spBtn = new Button(Morela)
+    if (menuBuf) spBtn.setImage(menuBuf)
+    spBtn.setBody(footer)
+    spBtn.setFooter('© ' + botName)
+    spBtn.addSelection('🎴 Pilih Sticker Pack')
+    spBtn.makeSection(`Hasil: ${text.length > 22 ? text.slice(0, 20) + '..' : text}`)
+    rows.forEach((r: any) => spBtn.makeRow('', r.title, r.description, r.id))
+    await spBtn.send(m.chat, { quoted: fkontak || m })
 
     await Morela.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 
