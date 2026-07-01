@@ -283,14 +283,13 @@ const handler = async (m: any, { Morela, reply, fkontak }: any) => {
 ╰╌╌⬡
 © ${botName}`;
 
-    await Morela.sendMessage(m.chat, {
-      image: buffer, caption: ' ', footer,
-      interactiveButtons: [{
-        name: "cta_url",
-        buttonParamsJson: JSON.stringify({ display_text: "Channel", url: CHANNEL_URL, merchant_url: CHANNEL_URL })
-      }],
-      hasMediaAttachment: true
-    }, { quoted: fkontak || m });
+    const { Button } = await import('../../Library/MessageBuilder.js')
+    const pingBtn = new Button(Morela)
+    pingBtn.setImage(buffer)
+    pingBtn.setBody(' ')
+    pingBtn.setFooter(footer)
+    pingBtn.addUrl('Channel', CHANNEL_URL)
+    await pingBtn.send(m.chat, { quoted: fkontak || m });
     await Morela.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
   } catch (err) {
     console.error('Server status error:', err);
