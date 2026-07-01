@@ -79,19 +79,27 @@ Edit dan reload plugin tanpa restart bot, tanpa disconnect WA.
 
 ```
 Morelav2/
-├── utama.ts                      # entry point, koneksi WA
-├── Morela.ts                     # message router & handler utama
-├── config.ts                     # prefix, owner, api keys, token
-├── tgbot.ts                      # Telegram bot integration
+├── launcher.ts                    # supervisor proses — spawn utama.ts, auto-restart bersih kalau exit code 69
+├── utama.ts                       # entry point WA, koneksi Baileys
+├── Morela.ts                      # message router & handler utama (WA)
+├── tgbot.ts                       # entry point bot Telegram (start/stop, dipanggil dari utama.ts)
+├── config.ts                      # prefix, owner, api keys, token
+├── tsconfig.json                  # konfigurasi TypeScript
+├── RESOLVENAMEGUIDE.MD             # panduan resolve nama/LID WhatsApp
 │
 ├── Core/
 │   ├── cache.ts                  # caching system
-│   ├── events.ts                 # event emitter
-│   ├── logutil.ts                # log utilities
+│   ├── events.ts                 # event emitter (messages, groups, dll — bukan koneksi)
+│   ├── logutil.ts                # log utilities (writeLog, patchConsoleError)
 │   ├── permissions.ts            # permission checker
 │   ├── sewa.ts                   # sewa grup core
 │   ├── sockext.ts                # socket extension
 │   └── store.ts                  # in-memory store
+│
+├── types/
+│   ├── global.d.ts                # deklarasi tipe global (ExtSocket, dll)
+│   ├── modules.d.ts                # deklarasi modul tanpa tipe bawaan
+│   └── node-globals.d.ts           # deklarasi global Node.js tambahan
 │
 ├── System/
 │   ├── logger.ts                 # logger
@@ -128,7 +136,40 @@ Morelav2/
 │   ├── chatcount.ts              # chat counter
 │   └── stats.ts                  # statistik bot
 │
-├── Plugins-ESM/
+├── Plugins-tgbot/                 # bot Telegram terpisah (jalan bareng WA di proses yang sama)
+│   ├── _pluginmanager.ts          # plugin lifecycle khusus tgbot
+│   │
+│   ├── core/
+│   │   ├── api.ts                # wrapper Telegram Bot API (sendMsg, sendPhoto, dll)
+│   │   ├── helpers.ts             # helper (pending photo, format uptime/bytes, dll)
+│   │   └── types.ts               # tipe TgPlugin
+│   │
+│   ├── menu/
+│   │   ├── menu.ts                # /menu — daftar command
+│   │   └── start.ts               # /start — welcome + tombol
+│   │
+│   ├── image/                     # kirim foto → proses via tombol
+│   │   ├── aiedit.ts              # /aiedit <prompt> — edit foto pakai AI
+│   │   ├── hd.ts / hdv1.ts / hdv2.ts  # upscale/Super HD (3 engine berbeda)
+│   │   ├── removebg.ts            # hapus background
+│   │   └── removewm.ts            # hapus watermark
+│   │
+│   ├── downloader/
+│   │   ├── ig.ts                  # /ig /instagram — download Instagram
+│   │   └── tiktok.ts              # /tiktok /tt — download TikTok
+│   │
+│   └── owner/                     # command khusus owner
+│       ├── broadcast.ts
+│       ├── clearcache.ts
+│       ├── exec.ts                # /exec /eval /shell — eksekusi kode/perintah
+│       ├── listbot.ts
+│       ├── off.ts / on.ts
+│       ├── resetlink.ts
+│       ├── restart.ts             # restart bot WA (exit code 69 → launcher.ts)
+│       ├── status.ts
+│       └── stopbot.ts
+│
+├── Plugins-ESM/                    # plugin bot WhatsApp
 │   ├── _pluginmanager.ts         # core plugin lifecycle
 │   │
 │   ├── admin/                    # manajemen grup
@@ -175,8 +216,7 @@ Morelav2/
 │   │   ├── spotify.ts
 │   │   ├── tiktok.ts / tiktok-pasive.ts / tiktokslide.ts / tt2.ts
 │   │   ├── webtoon.ts
-│   │   ├── ytmp3.ts / ytmp4.ts / yts.ts
-│   │   └── fb.ts
+│   │   └── ytmp3.ts / ytmp4.ts / yts.ts
 │   │
 │   ├── games/                    # games interaktif
 │   │   ├── asahotak.ts / asahotak_cek.ts
@@ -288,6 +328,7 @@ Morelav2/
 │       ├── skiplink.ts
 │       ├── stikercmd.ts / stikertiger.ts
 │       ├── tempmail-enhanced.ts
+│       ├── test.ts
 │       ├── to4k.ts
 │       ├── tomp3.ts / tovideo.ts / tovidio.ts
 │       ├── topchat-pasive.ts
@@ -299,6 +340,11 @@ Morelav2/
 │
 └── data/
     ├── morela.db                 # SQLite database utama
+    ├── font/                     # font buat canvas renderer (quran, rpg, dll)
+    │   ├── Poppins-Bold.ttf
+    │   ├── Poppins-Light.ttf
+    │   ├── Poppins-Medium.ttf
+    │   └── Poppins-Regular.ttf
     ├── asahotak.json
     ├── family100.json
     ├── susunkata.json
@@ -311,22 +357,26 @@ Morelav2/
 
 ## Cara Jalankan
 
-**Panel biasa (Pterodactyl / deline.cloud)**
+Morela sekarang punya **supervisor sendiri** (`launcher.ts`) — jadi **nggak butuh PM2 lagi**. `npm start` otomatis jalan lewat launcher, yang bakal auto-restart proses bot dari nol kalau ada restart yang disengaja (misal command `.restart` atau abis logout & perlu pairing ulang).
 
-```
+```bash
 npm start
 ```
 
-**Panel PM2 Egg**
+Itu aja. Launcher yang pegang kendali proses `utama.ts` di baliknya — nggak perlu setup process manager tambahan buat basic auto-restart.
+
+**Kalau mau jalanin langsung tanpa supervisor** (misal lagi debug cepat di lokal, dan gak butuh auto-restart):
 
 ```bash
-npm run dev      # startup command di panel
-
-pm2 save         # jalankan sekali di console setelah pertama start
-pm2 logs morela-dev
-pm2 restart morela-dev
-pm2 stop morela-dev
+npm run start:direct
 ```
+
+**Kalau tetap mau ada lapisan proteksi ekstra di panel/VPS** (misal biar bot auto-nyala lagi kalau server reboot, bukan cuma auto-restart internal), tinggal suruh process manager pilihan kamu (systemd, atau apapun yang disediakan panel-nya) manggil:
+
+```bash
+npm start
+```
+sebagai startup command-nya — **bukan** `npm run dev` atau langsung `tsx utama.ts` lagi, karena itu bakal skip lapisan launcher-nya.
 
 ## Buat Plugin Baru
 
@@ -388,4 +438,3 @@ global.tgBot = {
 
 © 2025 Morela · MIT License · by putraa
 </div>
-
