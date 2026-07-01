@@ -138,8 +138,12 @@ const handler = async (m: any, { Morela, args, reply, usedPrefix, command, fkont
       // fgsi pakai field dataUrl, ext, isAnimated, isVideo per stiker
       const src        = s.dataUrl || s.url || s.file_url || s.file || ''
       if (!src) continue
-      const stickerExt = (s.ext || '').replace('.', '') || (src.includes('.tgs') ? 'tgs' : 'webm')
-      const needConv   = s.isAnimated || s.isVideo || stickerExt === 'webm' || stickerExt === 'tgs'
+      const stickerExt = (s.ext || '').replace('.', '') ||
+        (src.includes('.tgs')  ? 'tgs'  :
+         src.includes('.webm') ? 'webm' : 'webp')
+      // Selalu konversi: memastikan resize 512x512 dan format WebP yang valid,
+      // baik untuk stiker statis (webp/png) maupun animasi (webm/tgs).
+      const needConv   = true
       try {
         const raw = await downloadBuffer(src)
         const buf = needConv
