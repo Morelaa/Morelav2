@@ -119,21 +119,15 @@ const handler = async (m: any, { Morela, text, command, reply, fkontak }: any) =
 
     const imgBuf = await canvasSpotify(results, text.trim())
 
-    const buttons = results.map((t, i) => ({
-      name: 'quick_reply',
-      buttonParamsJson: JSON.stringify({
-        display_text: `${i + 1}. ${t.title}`.slice(0, 30),
-        id: `.sptdl_${i + 1}`
-      })
-    }))
-
-    await Morela.sendMessage(m.chat, {
-      image:   imgBuf,
-      caption: `╭╌「 🎵 *Music Search* 」\n┃ 🔍 *${text.trim()}*\n┃ Pilih lagu di bawah 👇\n╰╌\n\n© ${botName}`,
-      footer:  'Pencarian Akurat via Shazam Engine',
-      interactiveButtons:    buttons,
-      hasMediaAttachment: true
-    }, { quoted: fkontak || m })
+    const { Button } = await import('../../Library/MessageBuilder.js')
+    const btn = new Button(Morela)
+    btn.setImage(imgBuf)
+    btn.setBody(`╭╬「 🎵 *Music Search* 」\n┃ 🔍 *${text.trim()}*\n┃ Pilih lagu di bawah 👇\n╰╬\n\n© ${botName}`)
+    btn.setFooter('Pencarian Akurat via Shazam Engine')
+    results.forEach((t, i) => {
+      btn.addReply(`${i + 1}. ${t.title}`.slice(0, 30), `.sptdl_${i + 1}`)
+    })
+    await btn.send(m.chat, { quoted: fkontak || m })
 
     await Morela.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 
