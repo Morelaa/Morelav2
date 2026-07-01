@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "tsx utama.ts",
     "build": "tsc",
-    "start": "tsx utama.ts",
+    "start": "tsx launcher.ts",
+    "start:direct": "tsx utama.ts",
     "migrate": "tsx scripts/migrate-json-to-sqlite.ts"
   },
   "ts-node": {
@@ -35,10 +36,10 @@
   "license": "MIT",
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@itsliaaa/baileys": "^0.3.16",
+    "@itsliaaa/baileys": "0.3.18-final",
     "archiver": "^5.3.1",
     "axios": "^1.13.6",
-    "baileys": "7.0.0-rc.9",
+    "baileys": "7.0.0-rc13",
     "better-sqlite3": "^11.10.0",
     "canvas": "^2.11.2",
     "chalk": "^4.1.2",
