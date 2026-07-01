@@ -100,25 +100,18 @@ const handler = async (m: any, { Morela, reply, text, fkontak }: any) => {
 └─────────────────────
 _Ketuk tombol untuk pilih video atau audio_ 👇`
 
-    await Morela.sendMessage(m.chat, {
-      image:   imageBuffer,
-      caption,
-      footer:  '© Morela Bot',
-      interactiveButtons: [
-        {
-          name: 'single_select',
-          buttonParamsJson: JSON.stringify({
-            title: 'Pilih Video / Audio',
-            sections: [{
-              title:           'Hasil: ' + (text.length > 22 ? text.slice(0, 20) + '..' : text),
-              highlight_label: 'Top Results',
-              rows,
-            }],
-          }),
-        },
-      ],
-      hasMediaAttachment: true,
-    }, { quoted: fkontak || m })
+    const { Button } = await import('../../Library/MessageBuilder.js')
+    const btn = new Button(Morela)
+    btn.setImage(imageBuffer)
+    btn.setBody(caption)
+    btn.setFooter('© Morela Bot')
+    btn.addSelection('Pilih Video / Audio')
+    btn.makeSection(
+      'Hasil: ' + (text.length > 22 ? text.slice(0, 20) + '..' : text),
+      'Top Results'
+    )
+    rows.forEach((r: any) => btn.makeRow(r.header, r.title, r.description, r.id))
+    await btn.send(m.chat, { quoted: fkontak || m })
 
     await Morela.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
 
