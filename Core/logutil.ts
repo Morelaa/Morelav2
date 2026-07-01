@@ -1,9 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import chalk from 'chalk';
 import type { ExtSocket } from '../types/global.js';
 import { kvGet } from '../Database/kvstore.js';
-import { logger } from '../System/logger.js';
 const _logDir  = './logs';
 const _logFile = _logDir + '/error.log';
 const _LOG_MAX = 2 * 1024 * 1024;
@@ -56,36 +54,4 @@ export function patchConsoleError(): void {
             if (jid) (globalThis.__sock__ as ExtSocket | undefined)?.sendMessage(jid, { text: '🔴 *Console Error*\n\n' + msg.slice(0, 1500) });
         } catch {}
     };
-}
-export function registerProcessHandlers(writeLogFn: (msg: string) => void): void {
-    process.on('uncaughtException', (err: unknown) => {
-        const _e = err as Error;
-        console.error(chalk.red.bold('🔴 [uncaughtException]'), _e.message, _e.stack);
-        writeLogFn('[uncaughtException] ' + (_e.stack ?? _e.message));
-        const jid = safeOwnerJid();
-        if (jid) try { (globalThis.__sock__ as ExtSocket | undefined)?.sendMessage(jid, { text: '🔴 *uncaughtException*\n\n' + (_e.stack ?? _e.message).slice(0, 1500) }); } catch {}
-    });
-    process.on('unhandledRejection', (reason: unknown) => {
-        const r   = reason as Error;
-        const msg = r?.message ?? String(r);
-        if (['Timed Out','Connection Closed','Connection Terminated','Socket connection timeout'].some(e => msg.includes(e))) return;
-        console.error(chalk.red.bold('🔴 [unhandledRejection]'), msg);
-        writeLogFn('[unhandledRejection] ' + String(r?.stack ?? r?.message ?? r));
-        const jid = safeOwnerJid();
-        if (jid) try { (globalThis.__sock__ as ExtSocket | undefined)?.sendMessage(jid, { text: '🔴 *unhandledRejection*\n\n' + String(r?.stack ?? r?.message ?? r).slice(0, 1500) }); } catch {}
-    });
-}
-export async function gracefulShutdown(signal: string, writeLogFn: (msg: string) => void, isShuttingDownRef: { value: boolean }): Promise<void> {
-    if (isShuttingDownRef.value) return;
-    isShuttingDownRef.value = true;
-    logger.warn('shutdown', `[${signal}] Graceful shutdown...`);
-    writeLogFn(`[SHUTDOWN] ${signal}`);
-    try {
-        const sock = globalThis.__sock__ as (ExtSocket & { end: (e: Error) => Promise<void> }) | undefined;
-        if (sock) {
-            try { (sock as any).ws?.close?.(); } catch {}
-        }
-    } catch (e) { console.log(chalk.gray('[SHUTDOWN] Socket close:', (e as Error).message)); }
-    logger.success('shutdown', 'Selesai.');
-    setTimeout(() => process.exit(0), 500);
 }
