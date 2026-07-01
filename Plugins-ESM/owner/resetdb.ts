@@ -111,19 +111,12 @@ const handler = async (m: any, { Morela, reply, fkontak }: any) => {
       await sendCard(Morela, m.chat, txt, imgBuf, quoted)
     } else {
 
-      await Morela.sendMessage(m.chat, {
-        text: ' ',
-        footer: txt,
-        interactiveButtons: [{
-          name: 'cta_url',
-          buttonParamsJson: JSON.stringify({
-            display_text: 'Chat Owner',
-            url:          OWNER_WA,
-            merchant_url: OWNER_WA
-          })
-        }],
-        hasMediaAttachment: false
-      }, { quoted })
+      const { Button } = await import('../../Library/MessageBuilder.js')
+      const rdbBtn = new Button(Morela)
+      rdbBtn.setBody(' ')
+      rdbBtn.setFooter(txt)
+      rdbBtn.addUrl('Chat Owner', OWNER_WA)
+      await rdbBtn.send(m.chat, { quoted })
     }
   } catch {
 
