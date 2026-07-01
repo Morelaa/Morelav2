@@ -45,25 +45,13 @@ const handler = async (m: any, { Morela, fkontak }: any) => {
     const res = await axios.get(BG_IMAGE_URL, { responseType: 'arraybuffer', timeout: 10_000 })
     const imgBuffer = Buffer.from(res.data)
 
-    await Morela.sendMessage(
-      m.chat,
-      {
-        image: imgBuffer,
-        caption,
-        interactiveButtons: [
-          {
-            name: 'cta_url',
-            buttonParamsJson: JSON.stringify({
-              display_text: '📞 Hubungin Kami',
-              url: OWNER_WA,
-              merchant_url: OWNER_WA,
-            }),
-          },
-        ],
-        hasMediaAttachment: true,
-      },
-      { quoted: fkontak || m }
-    )
+    const { Button } = await import('../../Library/MessageBuilder.js')
+    const lsBtn = new Button(Morela)
+    lsBtn.setImage(imgBuffer)
+    lsBtn.setBody(caption)
+    lsBtn.setFooter('')
+    lsBtn.addUrl('📞 Hubungin Kami', OWNER_WA)
+    await lsBtn.send(m.chat, { quoted: fkontak || m })
 
     await Morela.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
   } catch (err) {
