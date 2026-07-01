@@ -2,7 +2,7 @@ import type { ExtSocket, GroupData, MsgObj } from '../types/global.js';
 import type { GroupMetadata } from '@itsliaaa/baileys';
 import chalk from 'chalk';
 import * as baileys from '@itsliaaa/baileys';
-const { jidDecode, DisconnectReason } = baileys;
+const { jidDecode } = baileys;
 import { smsg } from '../System/message.js';
 import morelaHandler, { invalidateGroupCache } from '../Morela.js';
 import {
@@ -14,30 +14,21 @@ import {
 import { sendWelcome } from '../Plugins-ESM/admin/welcome.js';
 import { sendGoodbye } from '../Plugins-ESM/admin/goodbye.js';
 import { logger, logConnection } from '../System/logger.js';
-import { tgNotifyLogout } from '../tgbot.js';
 import { kvGet } from '../Database/kvstore.js';
 import { getMainOwner } from '../System/mainowner.js';
-import { writeLog } from './logutil.js';
-import { Boom } from '@hapi/boom';
 import type { BaileysStore } from './store.js';
 import fs from 'fs';
-
 export function registerEvents(
     Morela: ExtSocket,
     store: BaileysStore,
     stateRef: {
         isReady:        boolean;
-        isConnecting:   boolean;
         isShuttingDown: boolean;
-        reconnectCount: number;
     },
-    saveCreds: () => void,
-    connectToWhatsApp: () => Promise<void>
+    saveCreds: () => void
 ): void {
     const _processedIds = new Set<string>();
     const _DEDUP_TTL = 10_000;
-
-    // ── messages.upsert ───────────────────────────────────────────────────────
     Morela.ev.on('messages.upsert', async (chatUpdate: Record<string, unknown>) => {
         type _ChatUpd = { type: string; messages: Array<Record<string, unknown>> };
         const _cu = chatUpdate as unknown as _ChatUpd;
@@ -102,54 +93,12 @@ export function registerEvents(
             console.error(chalk.red("❌ Error processing message:"), (error as Error).message);
         }
     });
-
-    // ── connection.update ─────────────────────────────────────────────────────
     Morela.ev.on('connection.update', async (update: Record<string, unknown>) => {
-        const { connection, lastDisconnect } = update as {
-            connection?: string;
-            lastDisconnect?: { error?: unknown };
-        };
-
-        if (connection === 'close') {
-            stateRef.isReady = false;
-
-            if (stateRef.isShuttingDown) {
-                console.log(chalk.gray('[CONNECTION] Koneksi ditutup saat shutdown — skip reconnect.'));
-                return;
-            }
-
-            const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-            writeLog(`[DISCONNECT] code=${statusCode}`);
-
-            if (statusCode === DisconnectReason.loggedOut) {
-                console.log(chalk.red('❌ Logged out! Hapus folder ./session dan jalankan ulang.'));
-                writeLog('[DISCONNECT] Logged out');
-                try { await tgNotifyLogout(); } catch {}
-                stateRef.isConnecting = false;
-                return;
-            }
-
-            if (statusCode === 428) {
-                stateRef.reconnectCount++;
-                const delay428 = 5 * 60 * 1000;
-                console.log(chalk.yellow('⚠️ WA tolak koneksi (428). Reconnect dalam 5 menit...'));
-                writeLog('[DISCONNECT] 428 - reconnect in 5min');
-                setTimeout(() => { stateRef.isConnecting = false; connectToWhatsApp(); }, delay428);
-                return;
-            }
-
-            stateRef.reconnectCount++;
-            const delay = Math.min(5000 * Math.pow(1.5, stateRef.reconnectCount - 1), 60000);
-            console.log(chalk.yellow(`⚠️ Koneksi putus (${statusCode}). Reconnect ke-${stateRef.reconnectCount} dalam ${Math.round(delay / 1000)}s...`));
-            writeLog(`[DISCONNECT] code=${statusCode}, reconnect #${stateRef.reconnectCount}`);
-            setTimeout(() => { stateRef.isConnecting = false; connectToWhatsApp(); }, delay);
-
-        } else if (connection === 'open') {
-            stateRef.reconnectCount = 0;
+        const { connection } = update as { connection?: string };
+        if (connection === 'open') {
             stateRef.isReady = true;
             logConnection('connected', `Morela v2.0.0 · Node ${process.version} · PID ${process.pid}`);
             logger.success('whatsapp', 'Morela siap digunakan!');
-
             setTimeout(async () => {
                 try {
                     let ownerJid: string;
@@ -172,7 +121,6 @@ export function registerEvents(
                     });
                 } catch (e) { console.error('[NOTIF ONLINE] Gagal kirim:', (e as Error).message); }
             }, 5000);
-
             try {
                 const { clearAllJadibot } = await import('../Library/jadibotdb.js');
                 if (!global.jadibotSessions || global.jadibotSessions.size === 0) {
@@ -180,7 +128,6 @@ export function registerEvents(
                     logger.system('jadibotdb', 'Data jadibot dibersihkan saat startup');
                 }
             } catch (e) { console.error('[JADIBOTDB CLEAN]', (e as Error).message); }
-
             setTimeout(async () => {
                 try {
                     const jadibotDir = './sessions/jadibot';
@@ -210,7 +157,6 @@ export function registerEvents(
                     }, 8000);
                 } catch (e) { console.error('[JADIBOT AUTO-RESTORE]', (e as Error).message); }
             }, 5000);
-
             setTimeout(async () => {
                 try {
                     const activeJids = new Set(Object.keys(await Morela.groupFetchAllParticipating()));
@@ -223,8 +169,6 @@ export function registerEvents(
             }, 10000);
         }
     });
-
-    // ── group-participants.update ─────────────────────────────────────────────
     Morela.ev.on('group-participants.update', async (update: unknown) => {
         const { id, participants: rawParticipants, action } = update as {
             id: string;
@@ -233,7 +177,6 @@ export function registerEvents(
         };
         if (!id) return;
         invalidateGroupCache(id);
-
         type _ParticipantFull = { jid: string; phoneNumber: string | null };
         const participantsFull: _ParticipantFull[] = (rawParticipants ?? []).map(p => {
             if (typeof p === 'string') return { jid: p, phoneNumber: null };
@@ -244,7 +187,6 @@ export function registerEvents(
             return { jid: _jid, phoneNumber: _phone };
         }).filter((p): p is _ParticipantFull => !!p.jid);
         const participants: string[] = participantsFull.map(p => p.jid);
-
         const botNum     = Morela.user?.id?.replace(/[^0-9]/g, '') ?? '';
         const botJidFull = (Morela.user?.id?.split(':')[0] ?? '') + '@s.whatsapp.net';
         let botRemoved = false;
@@ -259,7 +201,6 @@ export function registerEvents(
                 }
             }
         }
-
         if (botRemoved) {
             logger.warn("group-db", `Bot removed/left from ${id}`);
             const purgeResult = purgeGroupData(id);
@@ -271,14 +212,12 @@ export function registerEvents(
             console.log(`[GROUP-DB] Purge grup ${id} selesai → ${purgeResult.tables.join(', ')}${purgeResult.errors.length ? ' | errors: ' + purgeResult.errors.join(', ') : ''}`);
             return;
         }
-
         const getMeta = async (): Promise<GroupMetadata | null> => {
             try {
                 if (store?.groupMetadata?.[id]) delete store.groupMetadata[id];
                 return await Morela.groupMetadata(id);
             } catch { return null; }
         };
-
         if (action === 'add' || action === 'approve') {
             const botJustJoined = participantsFull.some(p => {
                 if (p.jid === botJidFull) return true;
@@ -302,7 +241,6 @@ export function registerEvents(
                 }
             }
         }
-
         if ((action === 'add' || action === 'approve') && participantsFull.length > 0) {
             for (const pObj of participantsFull) {
                 if (pObj.jid) upsertParticipant(id, { id: pObj.jid, phoneNumber: pObj.phoneNumber ?? undefined });
@@ -353,7 +291,6 @@ export function registerEvents(
                 }
             } catch {}
         }
-
         if (action === 'promote' || action === 'demote') {
             const newRole = action === 'promote' ? 'admin' : 'member';
             for (const jidP of participants) {
@@ -362,8 +299,6 @@ export function registerEvents(
             try { const m = await getMeta(); if (m) saveGroup(id, { id: m.id, name: m.subject }); } catch {}
         }
     });
-
-    // ── groups.update ─────────────────────────────────────────────────────────
     Morela.ev.on('groups.update', async (updates: unknown) => {
         const _updates = updates as Partial<GroupMetadata>[];
         for (const update of _updates) {
@@ -377,12 +312,8 @@ export function registerEvents(
             if (Object.keys(partial).length > 0) updateGroup(update.id, partial);
         }
     });
-
-    // ── creds.update ──────────────────────────────────────────────────────────
     Morela.ev.on('creds.update', saveCreds);
-
     Morela.ev.on('call', async (_caller: unknown) => { console.log("CALL OUTGOING"); });
-
     (Morela.ev as unknown as { on(e: string, fn: (err: Error) => void): void }).on('error', (err: Error) => {
         console.error(chalk.red("Error: "), err.message);
     });
