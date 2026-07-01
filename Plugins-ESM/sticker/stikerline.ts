@@ -114,7 +114,9 @@ const handler = async (m: any, { Morela, args, reply, usedPrefix, command, fkont
       try {
         const raw = await downloadBuffer(stickerUrls[i])
 
-        const buf = isAnimated ? await toWebpBuffer(raw, true) : raw
+        // Selalu konversi ke WebP — stiker statis LINE berformat PNG/JPG
+        // dan tidak akan valid sebagai stiker WA jika dikirim mentah-mentah.
+        const buf = await toWebpBuffer(raw, isAnimated)
         stickerBuffers.push(buf)
       } catch (e) {
         console.error(`[LINE] stiker ${i + 1} gagal:`, (e as Error).message)
