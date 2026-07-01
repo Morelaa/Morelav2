@@ -27,26 +27,14 @@ function buildContextInfo() {
 }
 
 const handler = async (m: any, { Morela, args, fkontak }: any) => {
-  const send = async text =>
-    Morela.sendMessage(
-      m.chat,
-      {
-        text: ' ',
-        footer: bi(text),
-        interactiveButtons: [
-          {
-            name: 'cta_url',
-            buttonParamsJson: JSON.stringify({
-              display_text: 'Channel',
-              url:          CHANNEL_URL,
-              merchant_url: CHANNEL_URL
-            })
-          }
-        ],
-        contextInfo: buildContextInfo()
-      },
-      { quoted: fkontak || m }
-    )
+  const send = async (text: string) => {
+    const { Button } = await import('../../Library/MessageBuilder.js')
+    const jdwBtn = new Button(Morela)
+    jdwBtn.setBody(' ')
+    jdwBtn.setFooter(bi(text))
+    jdwBtn.addUrl('Channel', CHANNEL_URL)
+    await jdwBtn.send(m.chat, { quoted: fkontak || m })
+  }
 
   if (!args[0]) {
     return send(
